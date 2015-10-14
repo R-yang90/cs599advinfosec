@@ -101,8 +101,13 @@ int main (int argc, char **argv)
 //		cout << "type" << type << endl;
 
 		encrypt(plaintext1, plaintext_len, ciphertext, key, type);
-		cout << "ciphertext:" <<endl;
-		cout << ciphertext;
+
+//		cout << ciphertext;
+
+		ofstream fout;
+		fout.open("ciphertext.txt");
+		fout << ciphertext;
+		fout.close();
 
 		myfile.close();
 		delete[] plaintext1;
