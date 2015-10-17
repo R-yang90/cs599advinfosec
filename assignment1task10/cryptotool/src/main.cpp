@@ -325,6 +325,9 @@ int main (int argc, char **argv)
 		myfile.read ((char*) intext,intext_len);
 		myfile.close();
 
+		cout << "------------Original data from [ " << argv[2] << " ]"<< endl;
+		cout << intext << endl;
+
 		ERR_load_crypto_strings();
 		OpenSSL_add_all_algorithms();
 		OPENSSL_config(NULL);
@@ -332,29 +335,19 @@ int main (int argc, char **argv)
 		//if(strcmp(argv[6], "-e") == 0){
 
 			unsigned char ciphertext[1024] = "";
+			cout << "------------Encrypt data with " << argv[5] << endl;
 			int c_len = encrypt (intext, intext_len, key, ciphertext, type);
-
-			//cout << ciphertext;
+			cout << ciphertext << endl;
 
 		//}
 		//else{
 			unsigned char plaintext[1024] = "";
 			int p_len;
-			//cout << intext;
 
+			cout << "------------Decrypt data with " << argv[5] << endl;
 			//p_len = decrypt(intext, intext_len, key, plaintext, type);
 			p_len = decrypt(ciphertext, c_len, key, plaintext, type);
 			plaintext[p_len] = '\0';
-
-			//cout << plaintext;
-
-			cout << "------------Original data from [ " << argv[2] << " ]"<< endl;
-			cout << intext << endl;
-
-			cout << "------------Encrypt data with " << argv[5] << endl;
-			cout << ciphertext << endl;
-
-			cout << "------------Decrypt data with " << argv[5] << endl;
 			cout << plaintext << endl;
 
 		//}
