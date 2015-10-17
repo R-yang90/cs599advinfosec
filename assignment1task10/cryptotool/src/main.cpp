@@ -4,6 +4,7 @@
 #include <string.h>
 #include <fstream>
 #include <iostream>
+#include "version.h"
 using namespace std;
 
 enum {ecb = 0, cbc = 1};
@@ -100,7 +101,7 @@ int decrypt(unsigned char *ciphertext, int c_len, unsigned char *key, unsigned c
 
 int main (int argc, char **argv)
 {
-	//argv[1] -in
+	//argv[1] -in or -v
 	//argv[2] input filepath
 	//argv[3] -k option
 	//argv[4] key ex 0011223344556677
@@ -109,9 +110,13 @@ int main (int argc, char **argv)
 	//argv[7] output filepath
 	//argv[8] -debug
 
-	char* info_message = "Usage: cryptotool -in input -k key -ecb[-cbc] -e[-d] output\n";
+	char* info_message = "Usage: cryptotool -in input -k key -ecb[-cbc] -e[-d] output [-debug]\n";
 	if (argc < 6) {
-		cout << info_message;
+		if (1 < argc && argc < 3 && strcmp(argv[1], "-v") == 0) {
+			cout << "cryptotool Version: " << VERSION << ", Authors: " << AUTHORS << endl;
+		} else {
+			cout << info_message;
+		}
 		return 0;
 	} else if (strcmp(argv[1], "-in") != 0) {
 		cout << info_message;
