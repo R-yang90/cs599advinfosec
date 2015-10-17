@@ -332,15 +332,18 @@ int main (int argc, char **argv)
 		OpenSSL_add_all_algorithms();
 		OPENSSL_config(NULL);
 
-		//if(strcmp(argv[6], "-e") == 0){
+//		if(strcmp(argv[6], "-e") == 0){
 
 			unsigned char ciphertext[1024] = "";
 			cout << "------------Encrypt data with " << argv[5] << endl;
 			int c_len = encrypt (intext, intext_len, key, ciphertext, type);
 			cout << ciphertext << endl;
 
-		//}
-		//else{
+//			ofstream fout;
+//			fout.open(argv[7]);
+//			fout.write ((char *)ciphertext,c_len);
+//			fout.close();
+//		} else {
 			unsigned char plaintext[1024] = "";
 			int p_len;
 
@@ -350,7 +353,11 @@ int main (int argc, char **argv)
 			plaintext[p_len] = '\0';
 			cout << plaintext << endl;
 
-		//}
+//			ofstream fout;
+//			fout.open(argv[7]);
+//			fout.write ((char *)plaintext,p_len);
+//			fout.close();
+//		}
 
 	}
 	else {
