@@ -5,90 +5,92 @@
 #include <fstream>
 #include <iostream>
 using namespace std;
+
 enum {ecb = 0, cbc = 1};
 
+int debug;
 
 void handleErrors(void)
 {
-  ERR_print_errors_fp(stderr);
-  abort();
+    ERR_print_errors_fp(stderr);
+    abort();
+}
+
+void log(string message)
+{
+	if (debug == 1) {
+		cout << message << endl;
+	}
 }
 
 int encrypt(unsigned char *plaintext, int p_len, unsigned char *key, unsigned char *ciphertext, int type)
 {
 	EVP_CIPHER_CTX *ctx;
+	const EVP_CIPHER *cipher_type;
 	int len;
 	int c_len;
 
-
-	if(!(ctx = EVP_CIPHER_CTX_new())) handleErrors();
-
-	if(type == cbc){
-	  if(EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, NULL) != 1){
-		  handleErrors();
-	  }
+	if (!(ctx = EVP_CIPHER_CTX_new())) {
+		handleErrors();
 	}
 
-	else if(type == ecb){
-	  if(EVP_EncryptInit_ex(ctx, EVP_aes_128_ecb(), NULL, key, NULL) != 1){
-		  handleErrors();
-	  }
+	if (type == cbc){
+		cipher_type = EVP_aes_128_cbc();
+	} else if (type == ecb) {
+		cipher_type = EVP_aes_128_ecb();
 	}
 
+	if (EVP_EncryptInit_ex(ctx, cipher_type, NULL, key, NULL) != 1) {
+		handleErrors();
+	}
 
-	if(EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, p_len) != 1){
-	  handleErrors();
+	if (EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, p_len) != 1) {
+		handleErrors();
 	}
 
 	c_len = len;
 
-
-	if(EVP_EncryptFinal_ex(ctx, ciphertext + len, &len) != 1){
-	  handleErrors();
+	if (EVP_EncryptFinal_ex(ctx, ciphertext + len, &len) != 1) {
+		handleErrors();
 	}
 
 	c_len += len;
-
-
 	EVP_CIPHER_CTX_free(ctx);
-
 	return c_len;
 }
 
 int decrypt(unsigned char *ciphertext, int c_len, unsigned char *key, unsigned char *plaintext, int type)
 {
 	EVP_CIPHER_CTX *ctx;
-
+	const EVP_CIPHER *cipher_type;
 	int len;
 	int p_len;
 
-	if(!(ctx = EVP_CIPHER_CTX_new())) handleErrors();
-
-	if(type == cbc){
-	  if(1 != EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, NULL)){
-		  handleErrors();
-	  }
+	if (!(ctx = EVP_CIPHER_CTX_new())) {
+		handleErrors();
 	}
 
-	else if(type == ecb){
-	  if(1 != EVP_DecryptInit_ex(ctx, EVP_aes_128_ecb(), NULL, key, NULL)){
-		  handleErrors();
-	  }
+	if (type == cbc) {
+		cipher_type = EVP_aes_128_cbc();
+	} else if(type == ecb) {
+		cipher_type = EVP_aes_128_ecb();
 	}
 
+	if (EVP_DecryptInit_ex(ctx, cipher_type, NULL, key, NULL) != 1) {
+		handleErrors();
+	}
 
-	if(EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, c_len) != 1){
-	  handleErrors();
+	if (EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, c_len) != 1) {
+		handleErrors();
 	}
 
 	p_len = len;
 
-
-	if(EVP_DecryptFinal_ex(ctx, plaintext + len, &len) != 1){
-	  handleErrors();
+	if (EVP_DecryptFinal_ex(ctx, plaintext + len, &len) != 1) {
+		handleErrors();
 	}
-	p_len += len;
 
+	p_len += len;
 
 	EVP_CIPHER_CTX_free(ctx);
 
@@ -99,99 +101,105 @@ int decrypt(unsigned char *ciphertext, int c_len, unsigned char *key, unsigned c
 int main (int argc, char **argv)
 {
 	//argv[1] -in
-	//argv[2] input filename
+	//argv[2] input filepath
 	//argv[3] -k option
 	//argv[4] key
 	//argv[5] -ecb or -cbc
-	// DELETE? argv[6] -e or -d
-	// DELETE? argb[7] output filename
-	//k: 00112233445566778889aabbccddeeff
+	//argv[6] -e or -d
+	//argv[7] output filepath
+	//argv[8] -debug
 
+	char* info_message = "Usage: cryptotool -in input -k key -ecb[-cbc] -e[-d] output\n";
 	if (argc < 6) {
-		cout << "Usage: cryptotool -in input -k key -ecb[-cbc]\n";
+		cout << info_message;
 		return 0;
 	} else if (strcmp(argv[1], "-in") != 0) {
-		cout << "Usage: cryptotool -in file -k key -ecb[-cbc]\n";
+		cout << info_message;
 		return 0;
 	} else if (strcmp (argv[3], "-k") != 0){
-		cout << "Usage: cryptotool -in file -k key -ecb[-cbc]\n";
+		cout << info_message;
 		return 0;
 	} else if (strcmp (argv[5], "-cbc") != 0 || strcmp (argv[5], "-ecb") != 0) {
 		if (strcmp (argv[5], "-cbc") != 0 && strcmp (argv[5], "-ecb") != 0) {
-			cout << "Usage: cryptotool -in file -k key -ecb[-cbc]\n";
+			cout << info_message;
+			return 0;
+		}
+	} else if (strcmp (argv[6], "-e") != 0 || strcmp (argv[6], "-d") != 0) {
+		if (strcmp (argv[5], "-e") != 0 && strcmp (argv[5], "-d") != 0) {
+			cout << info_message;
 			return 0;
 		}
 	}
 
 	int type;
-	if(strcmp (argv[5], "-cbc") == 0){
+	if (strcmp(argv[5], "-cbc") == 0) {
 		type = cbc;
-	}
-	else{
+	} else {
 		type = ecb;
 	}
 
-	unsigned char *key = (unsigned char *) argv[4];
+	if (argc > 8) {
+		debug = strcmp(argv[8], "-debug") == -1 ? 0 : 1;
+	}
 
+	unsigned char *key = (unsigned char *) argv[4];
 
 	ifstream myfile;
 	myfile.open (argv[2]);
 	int intext_len;
 
-	if (myfile.is_open()){
+	if (myfile.is_open()) {
 		myfile.seekg(0, myfile.end);
 		intext_len = myfile.tellg();
 		myfile.seekg(0, myfile.beg);
 
 		unsigned char *intext = new unsigned char[intext_len];
-		myfile.read ((char*) intext,intext_len);
+		myfile.read ((char*)intext, intext_len);
 		myfile.close();
 
-		cout << "------------Original data from [ " << argv[2] << " ]"<< endl;
-		cout << intext << endl;
+		log("------------Original data from [ " + (string) argv[2] + " ]");
+		log((char*)intext);
 
 		ERR_load_crypto_strings();
 		OpenSSL_add_all_algorithms();
 		OPENSSL_config(NULL);
 
-		if(strcmp(argv[6], "-e") == 0){
-
+		if (strcmp(argv[6], "-e") == 0) {
 			unsigned char ciphertext[1024] = "";
-			cout << "------------Encrypt data with " << argv[5] << endl;
+			log("------------Encrypt data with " + (string) argv[5]);
 			int c_len = encrypt (intext, intext_len, key, ciphertext, type);
-			cout << ciphertext << endl;
-			BIO_dump_fp (stdout, (char *)ciphertext, c_len);
+			log((char *)ciphertext);
+			if (debug == 1) {
+				BIO_dump_fp (stdout, (char*)ciphertext, c_len);
+			}
 
 			ofstream fout;
 			fout.open(argv[7]);
-			fout.write ((char *)ciphertext,c_len);
+			fout.write((char*)ciphertext, c_len);
 			fout.close();
 		} else {
 			unsigned char plaintext[1024] = "";
 			int p_len;
 
-			cout << "------------Decrypt data with " << argv[5] << endl;
-			BIO_dump_fp (stdout, (char *)intext, intext_len);
+			log("------------Decrypt data with " + (string) argv[5]);
+			if (debug == 1) {
+				BIO_dump_fp (stdout, (char *)intext, intext_len);
+			}
 			p_len = decrypt(intext, intext_len, key, plaintext, type);
 			plaintext[p_len] = '\0';
-			cout << plaintext << endl;
+			log((char*)plaintext);
 
 			ofstream fout;
 			fout.open(argv[7]);
 			fout.write ((char *)plaintext,p_len);
 			fout.close();
 		}
-
-	}
-	else {
+	} else {
 		cout << "Please specify an existing file.\n";
 	}
 
-
-
-
-  EVP_cleanup();
-  ERR_free_strings();
+	EVP_cleanup();
+	ERR_free_strings();
 
   return 0;
 }
