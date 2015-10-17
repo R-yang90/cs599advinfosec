@@ -314,30 +314,16 @@ int main (int argc, char **argv)
 
 	ifstream myfile;
 	myfile.open (argv[2]);
-
-	unsigned char * intext1;
 	int intext_len;
 
 	if (myfile.is_open()){
-		string line;
-		string lines;
+		myfile.seekg(0, myfile.end);
+		intext_len = myfile.tellg();
+		myfile.seekg(0, myfile.beg);
 
-		while ( getline (myfile,line) ){
-		  lines += line;
-		  lines += '\n';
-		}
-
-		int length = lines.length()*sizeof(char);
-		char *intext = new char[length];
-		const char *intext_tmp = lines.c_str();
-		strcpy(intext,intext_tmp);
-
-		intext1 = (unsigned char*)intext;
-
-		intext_len = strlen((char *)intext1);
+		unsigned char *intext = new unsigned char[intext_len];
+		myfile.read ((char*) intext,intext_len);
 		myfile.close();
-
-
 
 		ERR_load_crypto_strings();
 		OpenSSL_add_all_algorithms();
@@ -346,7 +332,7 @@ int main (int argc, char **argv)
 		//if(strcmp(argv[6], "-e") == 0){
 
 			unsigned char ciphertext[1024] = "";
-			int c_len = encrypt (intext1, intext_len, key, ciphertext, type);
+			int c_len = encrypt (intext, intext_len, key, ciphertext, type);
 
 			//cout << ciphertext;
 
@@ -354,16 +340,16 @@ int main (int argc, char **argv)
 		//else{
 			unsigned char plaintext[1024] = "";
 			int p_len;
-			//cout << intext1;
+			//cout << intext;
 
-			//p_len = decrypt(intext1, intext_len, key, plaintext, type);
+			//p_len = decrypt(intext, intext_len, key, plaintext, type);
 			p_len = decrypt(ciphertext, c_len, key, plaintext, type);
 			plaintext[p_len] = '\0';
 
 			//cout << plaintext;
 
 			cout << "------------Original data from [ " << argv[2] << " ]"<< endl;
-			cout << intext1 << endl;
+			cout << intext << endl;
 
 			cout << "------------Encrypt data with " << argv[5] << endl;
 			cout << ciphertext << endl;
