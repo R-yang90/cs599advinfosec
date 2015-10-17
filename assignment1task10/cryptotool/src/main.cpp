@@ -103,7 +103,7 @@ int main (int argc, char **argv)
 	//argv[1] -in
 	//argv[2] input filepath
 	//argv[3] -k option
-	//argv[4] key
+	//argv[4] key ex 0011223344556677
 	//argv[5] -ecb or -cbc
 	//argv[6] -e or -d
 	//argv[7] output filepath
@@ -142,7 +142,23 @@ int main (int argc, char **argv)
 		debug = strcmp(argv[8], "-debug") == -1 ? 0 : 1;
 	}
 
+
 	unsigned char *key = (unsigned char *) argv[4];
+	int key_len = strlen((char *)key);
+	unsigned char *fine_key;
+
+	/*padding if key length is not enough*/
+	if(key_len < 16){
+		fine_key = new unsigned char[16];
+		strcpy((char *)fine_key, (char *)key);
+		for(int i=key_len; i<16; ++i){
+			fine_key[i] = '0';
+		}
+	}
+	else{
+		fine_key = key;
+	}
+
 
 	ifstream myfile;
 	myfile.open (argv[2]);
@@ -167,7 +183,7 @@ int main (int argc, char **argv)
 		if (strcmp(argv[6], "-e") == 0) {
 			unsigned char ciphertext[1024] = "";
 			log("------------Encrypt data with " + (string) argv[5]);
-			int c_len = encrypt (intext, intext_len, key, ciphertext, type);
+			int c_len = encrypt (intext, intext_len, fine_key, ciphertext, type);
 			log((char *)ciphertext);
 			if (debug == 1) {
 				BIO_dump_fp (stdout, (char*)ciphertext, c_len);
@@ -185,7 +201,7 @@ int main (int argc, char **argv)
 			if (debug == 1) {
 				BIO_dump_fp (stdout, (char *)intext, intext_len);
 			}
-			p_len = decrypt(intext, intext_len, key, plaintext, type);
+			p_len = decrypt(intext, intext_len, fine_key, plaintext, type);
 			plaintext[p_len] = '\0';
 			log((char*)plaintext);
 
