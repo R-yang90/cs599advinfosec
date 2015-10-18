@@ -24,12 +24,13 @@ void log(string message)
 	}
 }
 
-int encrypt(unsigned char *plaintext, int p_len, unsigned char *key, unsigned char *ciphertext, int type)
+unsigned char *encrypt(unsigned char *plaintext, int p_len, unsigned char *key, int *c_len, int type)
 {
 	EVP_CIPHER_CTX *ctx;
 	const EVP_CIPHER *cipher_type;
 	int len;
-	int c_len;
+	int r_len = 0;
+	int max_block_size = 8;
 
 	if (!(ctx = EVP_CIPHER_CTX_new())) {
 		handleErrors();
@@ -45,27 +46,30 @@ int encrypt(unsigned char *plaintext, int p_len, unsigned char *key, unsigned ch
 		handleErrors();
 	}
 
+	unsigned char *ciphertext = (unsigned char*) malloc(p_len + EVP_CIPHER_CTX_block_size(ctx));
+
 	if (EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, p_len) != 1) {
 		handleErrors();
 	}
 
-	c_len = len;
+	r_len = len;
 
 	if (EVP_EncryptFinal_ex(ctx, ciphertext + len, &len) != 1) {
 		handleErrors();
 	}
 
-	c_len += len;
+	r_len += len;
+	*c_len = r_len;
 	EVP_CIPHER_CTX_free(ctx);
-	return c_len;
+	return ciphertext;
 }
 
-int decrypt(unsigned char *ciphertext, int c_len, unsigned char *key, unsigned char *plaintext, int type)
+unsigned char *decrypt(unsigned char *ciphertext, int c_len, unsigned char *key, int *p_len, int type)
 {
 	EVP_CIPHER_CTX *ctx;
 	const EVP_CIPHER *cipher_type;
 	int len;
-	int p_len;
+	int r_len;
 
 	if (!(ctx = EVP_CIPHER_CTX_new())) {
 		handleErrors();
@@ -81,21 +85,24 @@ int decrypt(unsigned char *ciphertext, int c_len, unsigned char *key, unsigned c
 		handleErrors();
 	}
 
+	unsigned char *plaintext = (unsigned char*) malloc(c_len + EVP_CIPHER_CTX_block_size(ctx) + 1);
+
 	if (EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, c_len) != 1) {
 		handleErrors();
 	}
 
-	p_len = len;
+	r_len = len;
 
 	if (EVP_DecryptFinal_ex(ctx, plaintext + len, &len) != 1) {
 		handleErrors();
 	}
 
-	p_len += len;
+	r_len += len;
+	*p_len = r_len;
 
 	EVP_CIPHER_CTX_free(ctx);
 
-	return p_len;
+	return plaintext;
 }
 
 
@@ -110,10 +117,10 @@ int main (int argc, char **argv)
 	//argv[7] output filepath
 	//argv[8] -debug
 
-	char* info_message = "Usage: cryptotool -in input -k key -ecb[-cbc] -e[-d] output [-debug]\n";
+	string info_message = "Usage: cryptotool -in input -k key -ecb[-cbc] -e[-d] output [-debug]\n";
 	if (argc < 6) {
 		if (1 < argc && argc < 3 && strcmp(argv[1], "-v") == 0) {
-			cout << "cryptotool Version: " << VERSION << ", Authors: " << AUTHORS << endl;
+			printf("cryptotool Version: %s, Authors: %s\n", VERSION, AUTHORS);
 		} else {
 			cout << info_message;
 		}
@@ -186,9 +193,9 @@ int main (int argc, char **argv)
 		OPENSSL_config(NULL);
 
 		if (strcmp(argv[6], "-e") == 0) {
-			unsigned char ciphertext[1024] = "";
+			int c_len;
 			log("------------Encrypt data with " + (string) argv[5]);
-			int c_len = encrypt (intext, intext_len, fine_key, ciphertext, type);
+			unsigned char *ciphertext = encrypt(intext, intext_len, fine_key, &c_len, type);
 			log((char *)ciphertext);
 			if (debug == 1) {
 				BIO_dump_fp (stdout, (char*)ciphertext, c_len);
@@ -199,14 +206,13 @@ int main (int argc, char **argv)
 			fout.write((char*)ciphertext, c_len);
 			fout.close();
 		} else {
-			unsigned char plaintext[1024] = "";
 			int p_len;
 
 			log("------------Decrypt data with " + (string) argv[5]);
 			if (debug == 1) {
 				BIO_dump_fp (stdout, (char *)intext, intext_len);
 			}
-			p_len = decrypt(intext, intext_len, fine_key, plaintext, type);
+			unsigned char *plaintext = decrypt(intext, intext_len, fine_key, &p_len, type);
 			plaintext[p_len] = '\0';
 			log((char*)plaintext);
 
