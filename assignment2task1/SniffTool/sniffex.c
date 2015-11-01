@@ -1,4 +1,8 @@
 /*
+ * Modified by Michael Tran and Rosa Yang
+ */
+
+/*
  * sniffex.c
  *
  * Sniffer example of TCP/IP packet capture using libpcap.
@@ -308,6 +312,7 @@ print_app_usage(void)
 	printf("\n");
 	printf("Options:\n");
 	printf("    interface    Listen on <interface> for packets.\n");
+	printf("    promisc;     Listen device using promiscuous mode (1=enabled, 0=disabled)");
 	printf("\n");
 
 return;
@@ -512,19 +517,23 @@ int main(int argc, char **argv)
 	bpf_u_int32 mask;			/* subnet mask */
 	bpf_u_int32 net;			/* ip */
 	int num_packets = 10;			/* number of packets to capture */
+	int promisc = 1;           /* promiscuous mode enabled */
 
 	print_app_banner();
 
 	/* check for capture device name on command-line */
-	if (argc == 2) {
-		dev = argv[1];
+	if (argc >= 2) {
+		 dev = argv[1];
 	}
-	else if (argc > 2) {
+	if (argc >= 3) {
+		promisc = atoi(argv[2]);
+	}
+	if (argc > 3) {
 		fprintf(stderr, "error: unrecognized command-line options\n\n");
 		print_app_usage();
 		exit(EXIT_FAILURE);
 	}
-	else {
+	else if (!dev) {
 		/* find a capture device if not specified on command-line */
 		dev = pcap_lookupdev(errbuf);
 		if (dev == NULL) {
@@ -546,9 +555,10 @@ int main(int argc, char **argv)
 	printf("Device: %s\n", dev);
 	printf("Number of packets: %d\n", num_packets);
 	printf("Filter expression: %s\n", filter_exp);
+	printf("Promiscuous mode: %d\n", promisc);
 
 	/* open capture device */
-	handle = pcap_open_live(dev, SNAP_LEN, 1, 1000, errbuf);
+	handle = pcap_open_live(dev, SNAP_LEN,  promisc, 1000, errbuf);
 	if (handle == NULL) {
 		fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);
 		exit(EXIT_FAILURE);
