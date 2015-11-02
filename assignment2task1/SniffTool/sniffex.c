@@ -535,7 +535,13 @@ int main(int argc, char **argv)
 			strcpy(filter_exp, argv[3]);
 		}
 	}
-	if (argc > 4) {
+	if (argc >= 5) {
+		int n_packets = atoi(argv[4]);
+		if (n_packets > -1) {
+			num_packets = n_packets;
+		}
+	}
+	if (argc > 5) {
 		fprintf(stderr, "error: unrecognized command-line options\n\n");
 		print_app_usage();
 		exit(EXIT_FAILURE);
