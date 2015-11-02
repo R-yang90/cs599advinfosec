@@ -314,6 +314,7 @@ print_app_usage(void)
 	printf("    interface    Listen on <interface> for packets.\n");
 	printf("    promisc      (Optional) Listen device using promiscuous mode (1=enabled, 0=disabled)");
 	printf("    fp           (Optional) Filter expression");
+	printf("    max_packets  (Optional) Maximum packets to sniff. 0=No limit");
 	printf("\n");
 
 return;
