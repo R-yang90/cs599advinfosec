@@ -312,7 +312,8 @@ print_app_usage(void)
 	printf("\n");
 	printf("Options:\n");
 	printf("    interface    Listen on <interface> for packets.\n");
-	printf("    promisc;     Listen device using promiscuous mode (1=enabled, 0=disabled)");
+	printf("    promisc      (Optional) Listen device using promiscuous mode (1=enabled, 0=disabled)");
+	printf("    fp           (Optional) Filter expression");
 	printf("\n");
 
 return;
@@ -528,7 +529,13 @@ int main(int argc, char **argv)
 	if (argc >= 3) {
 		promisc = atoi(argv[2]);
 	}
-	if (argc > 3) {
+	if (argc >= 4) {
+		int exp_len = strlen(argv[3]);
+		if (exp_len) {
+			strcpy(filter_exp, argv[3]);
+		}
+	}
+	if (argc > 4) {
 		fprintf(stderr, "error: unrecognized command-line options\n\n");
 		print_app_usage();
 		exit(EXIT_FAILURE);
